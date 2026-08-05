@@ -1,0 +1,100 @@
+spring:
+  application:
+    name: event-stream-platform
+  profiles:
+    default: dev
+  threads:
+    virtual:
+      enabled: true
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9094}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+    producer:
+      key-serializer:   org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      acks: all
+      retries: 2147483647
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        linger.ms: 20
+        batch.size: 65536
+        compression.type: lz4
+        delivery.timeout.ms: 120000
+    consumer:
+      group-id: sink-consumer
+      key-deserializer:   org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 500
+      properties:
+        specific.avro.reader: true
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3
+
+esp:
+  topics:
+    raw: raw-events
+    dlq: raw-events.DLT
+  sink:
+    batch:
+      max-rows: 500
+      max-wait-ms: 1000
+  clickhouse:
+    url:      ${CLICKHOUSE_URL:jdbc:clickhouse://localhost:8123/events}
+    user:     ${CLICKHOUSE_USER:esp}
+    password: ${CLICKHOUSE_PASSWORD:esp}
+
+server:
+  port: 8080
+  shutdown: graceful
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus, modulith, kafka
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        esp.sink.insert: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+    tags:
+      service: ${spring.application.name}
+      env: ${DEPLOY_ENV:local}
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+springdoc:
+  swagger-ui:
+    path: /docs
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.esp: DEBUG
+    org.apache.kafka: WARN

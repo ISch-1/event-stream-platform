@@ -1,0 +1,40 @@
+{
+  "type": "record",
+  "name": "Event",
+  "namespace": "com.esp.avro",
+  "doc": "Wire format for events flowing through the pipeline. BACKWARD compatibility enforced by Schema Registry — new optional fields OK, removing or renaming fields is not.",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Client-generated UUID. Used as dedup key in ClickHouse."
+    },
+    {
+      "name": "eventType",
+      "type": "string",
+      "doc": "Snake-case event name, e.g. page_view, add_to_cart, checkout_completed."
+    },
+    {
+      "name": "userId",
+      "type": "string",
+      "doc": "Opaque user identifier — do not send PII here."
+    },
+    {
+      "name": "eventTime",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Occurred-at timestamp in epoch millis (UTC)."
+    },
+    {
+      "name": "payload",
+      "type": { "type": "map", "values": "string" },
+      "default": {},
+      "doc": "Free-form attributes serialised as string values. Nested structures should be flattened by the caller."
+    },
+    {
+      "name": "source",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional origin (e.g. \"web\", \"ios\", \"backfill\"). Added in v1 as optional to stay backward-compatible."
+    }
+  ]
+}

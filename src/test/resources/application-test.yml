@@ -1,0 +1,19 @@
+spring:
+  kafka:
+    properties:
+      # `mock://` scheme is intercepted by Confluent's KafkaAvroSerializer/Deserializer
+      # and backed by an in-process MockSchemaRegistryClient — no Schema Registry
+      # container needed. Producer and consumer share the same registry by URL.
+      schema.registry.url: mock://esp-tests
+
+esp:
+  sink:
+    batch:
+      max-rows: 100
+      max-wait-ms: 200
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN
+    com.esp: DEBUG
