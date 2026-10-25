@@ -59,10 +59,10 @@ public class IngestService {
         long timestamp = eventTimeEpochMs != null ? eventTimeEpochMs : Instant.now().toEpochMilli();
 
         Event avro = Event.newBuilder()
-                .setEventId(id.toString())
+                .setEventId(id)
                 .setEventType(type)
                 .setUserId(userId)
-                .setEventTime(timestamp)
+                .setEventTime(Instant.ofEpochMilli(timestamp))
                 .setPayload(payload == null ? Map.of() : Map.copyOf(payload))
                 .setSource(source)
                 .build();

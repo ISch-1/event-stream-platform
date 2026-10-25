@@ -32,7 +32,7 @@ public class ClickHouseWriter {
             INSERT INTO events.raw_events
                 (event_id, event_type, user_id, event_time, ingested_at,
                  payload_json, source_topic, kafka_partition, kafka_offset)
-            VALUES (?, ?, ?, ?, now64(3), ?, ?, ?, ?)
+            VALUES (?, ?, ?, fromUnixTimestamp64Milli(?), now64(3), ?, ?, ?, ?)
             """;
 
     private final JdbcTemplate jdbc;
@@ -74,10 +74,10 @@ public class ClickHouseWriter {
 
     private void bind(PreparedStatement ps, ConsumerRecord<String, Event> rec, Event e) throws SQLException {
         int i = 1;
-        ps.setString(i++, e.getEventId());
+        ps.setString(i++, e.getEventId().toString());
         ps.setString(i++, e.getEventType());
         ps.setString(i++, e.getUserId());
-        ps.setLong  (i++, e.getEventTime());
+        ps.setLong  (i++, e.getEventTime().toEpochMilli());   // epoch millis, converted in SQL
         ps.setString(i++, payloadJson(e));
         ps.setString(i++, rec.topic());
         ps.setInt   (i++, rec.partition());
@@ -85,13 +85,11 @@ public class ClickHouseWriter {
     }
 
     private String payloadJson(Event e) {
-        Map<CharSequence, CharSequence> raw = e.getPayload();
+        // avro-maven-plugin uses stringType=String, so keys and values are plain Strings.
+        Map<String, String> raw = e.getPayload();
         if (raw == null || raw.isEmpty()) return "{}";
         try {
-            // Force plain-String keys/values for stable JSON output.
-            java.util.Map<String, String> converted = new java.util.HashMap<>(raw.size());
-            raw.forEach((k, v) -> converted.put(k.toString(), v == null ? null : v.toString()));
-            return mapper.writeValueAsString(converted);
+            return mapper.writeValueAsString(raw);
         } catch (JsonProcessingException ex) {
             log.warn("Payload for event {} could not be serialised to JSON: {}", e.getEventId(), ex.getMessage());
             return "{}";

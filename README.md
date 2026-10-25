@@ -43,13 +43,7 @@ Full sequence diagrams live in [docs/architecture.md](docs/architecture.md).
 
 Prerequisites: JDK 21, Docker (Compose v2), `curl`, `jq`. Optional: `k6`.
 
-One-time on a fresh clone:
-
-```bash
-mvn -N wrapper:wrapper -Dmaven=3.9.9
-```
-
-Then:
+The Maven wrapper (`./mvnw`) is committed, so a JDK is all you need to build.
 
 ```bash
 make up        # Kafka + Schema Registry + ClickHouse + Prometheus + Grafana + Jaeger + Kafka UI

@@ -22,10 +22,12 @@
     <properties>
         <java.version>21</java.version>
         <spring-modulith.version>1.2.4</spring-modulith.version>
-        <testcontainers.version>1.20.2</testcontainers.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
         <confluent.version>7.7.1</confluent.version>
         <avro.version>1.11.4</avro.version>
-        <clickhouse-jdbc.version>0.6.5</clickhouse-jdbc.version>
+        <!-- 0.6.5's "all" jar leaves out com.clickhouse.client (and its pom does not
+             declare it), so the driver cannot load; 0.6.4's still bundles it. -->
+        <clickhouse-jdbc.version>0.6.4</clickhouse-jdbc.version>
         <springdoc.version>2.6.0</springdoc.version>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -114,6 +116,12 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- JdbcTemplate only: ClickHouseConfig builds its own DataSource, so no
+             starter (and no Boot DataSource auto-configuration) is wanted. -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
         </dependency>
 
         <!-- Modularity -->
